@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Gb </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        /* --- ESTILOS GERAIS & ANIMAÇÕES --- */
+        body { font-family: 'Inter', sans-serif; overflow-x: hidden; background-color: #f3f4f6; }
+        
+        .content-section { display: none; }
+        .content-section.active { display: block; animation: fadeIn 0.4s ease-out; }
+        
+        .nav-link.active { 
+            background: linear-gradient(90deg, rgba(124, 58, 237, 0.2) 0%, rgba(0,0,0,0) 100%); 
+            border-left: 4px solid #8b5cf6; 
+            color: #d8b4fe;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- LOGIN FUTURISTA (GLASSMORPHISM) --- */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        
+        .animated-bg {
+            background: linear-gradient(-45deg, #020617, #2e1065, #1e1b4b, #172554);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+        
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- UI ELEMENTS --- */
+        .toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #1e293b;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 100;
+            right: 30px;
+            bottom: 30px;
+            font-size: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            opacity: 0;
+            transition: opacity 0.5s, bottom 0.5s;
+        }
+        .toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+        .toast.success { border-left: 4px solid #10b981; }
+        .toast.error { border-left: 4px solid #ef4444; }
+
+        /* Modal */
+        .modal {
+            display: none; position: fixed; z-index: 60; left: 0; top: 0;
+            width: 100%; height: 100%; overflow: auto; 
+            background-color: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+        }
+        .modal-content {
+            background-color: #fff; margin: 10% auto; padding: 25px; 
+            border: 1px solid #888; width: 90%; max-width: 500px;
+            border-radius: 16px; animation: slideDown 0.3s;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        @keyframes slideDown {
+            from {transform: translateY(-50px); opacity: 0;}
+            to {transform: translateY(0); opacity: 1;}
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toast" class="toast">Ação concluída</div>
+
+    <section id="login-screen" class="fixed inset-0 z-[100] flex items-center justify-center animated-bg text-white">
+        <div class="glass-panel p-10 rounded-2xl w-full max-w-md mx-4 relative border-t border-white/10">
+            <div class="text-center mb-10">
+                <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-slate-900/50 border border-purple-500/30 mb-6 shadow-[0_0_30px_rgba(139,92,246,0.3)]">
+                    <i class="fas fa-shield-alt text-4xl text-purple-400"></i>
+                </div>
+                <h2 class="text-3xl font-bold tracking-widest font-[monospace]">ADMIN PANEL</h2>
+                <p class="text-gray-400 text-xs mt-2 uppercase tracking-widest">Acesso Restrito</p>
+            </div>
+            <form onsubmit="handleLogin(event)">
+                <div class="mb-5 relative group">
+                    <i class="fas fa-user absolute left-4 top-3.5 text-gray-500 group-focus-within:text-purple-400 transition"></i>
+                    <input type="email" id="login-email" class="w-full bg-slate-900/60 text-white pl-12 pr-4 py-3 rounded-lg border border-gray-700 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:outline-none transition" placeholder="ID Admin" required>
+                </div>
+                <div class="mb-8 relative group">
+                    <i class="fas fa-key absolute left-4 top-3.5 text-gray-500 group-focus-within:text-purple-400 transition"></i>
+                    <input type="password" id="login-password" class="w-full bg-slate-900/60 text-white pl-12 pr-4 py-3 rounded-lg border border-gray-700 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:outline-none transition" placeholder="Chave de Acesso" required>
+                </div>
+                <button type="submit" class="w-full bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-bold py-3.5 rounded-lg shadow-lg transform hover:scale-[1.02] transition duration-300 border border-white/10">
+                    AUTENTICAR <i class="fas fa-arrow-right ml-2 text-xs"></i>
+                </button>
+            </form>
+            <p class="mt-6 text-center text-gray-600 text-xs">V3.0 Stable Build</p>
+        </div>
+    </section>
+
+    <div id="app-main" style="display: none;">
+        
+        <div class="fixed inset-y-0 left-0 w-64 bg-[#0f172a] text-gray-400 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 z-50" id="sidebar">
+            <div class="p-6 text-xl font-bold border-b border-gray-800 text-white flex items-center">
+                <i class="fas fa-layer-group mr-3 text-purple-500"></i> Sesiom corp
+            </div>
+            
+            <div class="px-6 py-4">
+                <p class="text-xs uppercase font-bold text-gray-600 tracking-wider mb-2">Geral</p>
+                <nav class="space-y-1">
+                    <a href="#" onclick="navTo('dashboard')" class="nav-link active flex items-center py-2.5 px-4 rounded-lg hover:bg-white/5 transition"><i class="fas fa-home w-8"></i> Dashboard</a>
+                    <a href="#" onclick="navTo('vendas')" class="nav-link flex items-center py-2.5 px-4 rounded-lg hover:bg-white/5 transition"><i class="fas fa-eye w-8"></i> Ver Vendas</a>
+                    <a href="#" onclick="navTo('registro')" class="nav-link flex items-center py-2.5 px-4 rounded-lg hover:bg-white/5 transition"><i class="fas fa-plus-circle w-8"></i> Nova Venda</a>
+                </nav>
+            </div>
+
+            <div class="px-6 py-2">
+                <p class="text-xs uppercase font-bold text-gray-600 tracking-wider mb-2">Administração</p>
+                <nav class="space-y-1">
+                    <a href="#" onclick="navTo('admin')" class="nav-link flex items-center py-2.5 px-4 rounded-lg hover:bg-white/5 transition text-red-300 hover:text-red-200"><i class="fas fa-trash-alt w-8"></i> Controle / Excluir</a>
+                    <a href="#" onclick="navTo('usuarios')" class="nav-link flex items-center py-2.5 px-4 rounded-lg hover:bg-white/5 transition"><i class="fas fa-users-cog w-8"></i> Usuários</a>
+                    <a href="#" onclick="navTo('contabilidade')" class="nav-link flex items-center py-2.5 px-4 rounded-lg hover:bg-white/5 transition"><i class="fas fa-coins w-8"></i> Financeiro</a>
+                </nav>
+            </div>
+
+            <div class="absolute bottom-0 w-full p-4 border-t border-gray-800">
+                <a href="javascript:location.reload()" class="flex items-center text-gray-400 hover:text-white transition"><i class="fas fa-sign-out-alt w-8"></i> Deslogar</a>
+            </div>
+        </div>
+
+        <div class="lg:ml-64 min-h-screen flex flex-col transition-all duration-300">
+            
+            <header class="bg-white shadow-sm p-4 h-16 flex justify-between items-center sticky top-0 z-40">
+                <button onclick="document.getElementById('sidebar').classList.toggle('-translate-x-full')" class="text-2xl lg:hidden text-purple-800"><i class="fas fa-bars"></i></button>
+                <h1 id="page-title" class="text-lg font-bold text-gray-700 uppercase tracking-wide ml-2">Visão Geral</h1>
+                <div class="flex items-center gap-4">
+                    <span class="bg-purple-100 text-purple-700 text-xs font-bold px-3 py-1 rounded-full border border-purple-200">ADMIN MODE</span>
+                    <div class="w-9 h-9 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md">AD</div>
+                </div>
+            </header>
+
+            <main class="p-6 flex-grow">
+
+                <section id="dashboard" class="content-section active">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border-b-4 border-purple-500">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-gray-400 text-xs font-bold uppercase">Faturamento</p>
+                                    <h3 class="text-2xl font-bold text-gray-800 mt-1" id="dash-receita">R$ 0,00</h3>
+                                </div>
+                                <div class="p-2 bg-purple-50 rounded-lg text-purple-600"><i class="fas fa-wallet"></i></div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border-b-4 border-blue-500">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-gray-400 text-xs font-bold uppercase">Vendas Totais</p>
+                                    <h3 class="text-2xl font-bold text-gray-800 mt-1" id="dash-pedidos">0</h3>
+                                </div>
+                                <div class="p-2 bg-blue-50 rounded-lg text-blue-600"><i class="fas fa-shopping-bag"></i></div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border-b-4 border-green-500">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-gray-400 text-xs font-bold uppercase">Equipe</p>
+                                    <h3 class="text-2xl font-bold text-gray-800 mt-1" id="dash-users">0</h3>
+                                </div>
+                                <div class="p-2 bg-green-50 rounded-lg text-green-600"><i class="fas fa-users"></i></div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border-b-4 border-orange-500">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-gray-400 text-xs font-bold uppercase">Pendentes</p>
+                                    <h3 class="text-2xl font-bold text-gray-800 mt-1" id="dash-pendente">R$ 0,00</h3>
+                                </div>
+                                <div class="p-2 bg-orange-50 rounded-lg text-orange-600"><i class="fas fa-clock"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm mb-6">
+                        <h3 class="font-bold text-gray-700 mb-4">Performance Anual</h3>
+                        <div class="h-64"><canvas id="mainChart"></canvas></div>
+                    </div>
+                </section>
+
+                <section id="vendas" class="content-section">
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+                        <div class="p-5 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                            <h2 class="font-bold text-gray-700"><i class="fas fa-list mr-2"></i>Histórico de Vendas</h2>
+                            <span class="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">Modo Leitura</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-white text-gray-500 text-xs uppercase border-b">
+                                    <tr>
+                                        <th class="p-4 font-semibold">Cliente</th>
+                                        <th class="p-4 font-semibold">Produto</th>
+                                        <th class="p-4 font-semibold">Data</th>
+                                        <th class="p-4 font-semibold">Valor</th>
+                                        <th class="p-4 font-semibold">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sales-view-body" class="divide-y divide-gray-100 text-sm"></tbody>
+                            </table>
+                            <div id="empty-view" class="hidden p-8 text-center text-gray-400">Sem registros.</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="admin" class="content-section">
+                    <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center text-red-800">
+                        <i class="fas fa-exclamation-triangle text-2xl mr-4"></i>
+                        <div>
+                            <h3 class="font-bold">Área de Perigo</h3>
+                            <p class="text-sm">As ações nesta tela são irreversíveis. Cuidado ao excluir registros.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-red-100">
+                        <div class="p-5 border-b border-gray-100 flex justify-between items-center">
+                            <h2 class="font-bold text-red-600"><i class="fas fa-trash-alt mr-2"></i>Gerenciar Exclusões</h2>
+                            <button onclick="deleteAllSales()" class="text-xs bg-red-600 text-white px-3 py-1.5 rounded hover:bg-red-700">Excluir Tudo</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-red-50 text-red-800 text-xs uppercase">
+                                    <tr>
+                                        <th class="p-4">ID</th>
+                                        <th class="p-4">Cliente</th>
+                                        <th class="p-4">Valor</th>
+                                        <th class="p-4 text-center">Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sales-admin-body" class="divide-y divide-gray-100 text-sm"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="usuarios" class="content-section">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Membros da Equipe</h2>
+                        <button onclick="openUserModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 shadow transition flex items-center">
+                            <i class="fas fa-plus mr-2"></i> Novo Usuário
+                        </button>
+                    </div>
+                    <div id="users-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    </div>
+                </section>
+
+                <section id="registro" class="content-section">
+                    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-sm p-8 border border-gray-100">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                            <span class="bg-purple-100 text-purple-600 w-10 h-10 rounded-full flex items-center justify-center mr-3 text-sm"><i class="fas fa-pen"></i></span>
+                            Lançar Venda
+                        </h2>
+                        <form id="sale-form" onsubmit="registerSale(event)">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
+                                    <input type="text" id="sale-client" required class="w-full border-gray-300 border rounded-lg p-2.5 focus:ring-2 focus:ring-purple-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Produto</label>
+                                    <input type="text" id="sale-product" required class="w-full border-gray-300 border rounded-lg p-2.5 focus:ring-2 focus:ring-purple-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Valor (R$)</label>
+                                    <input type="number" id="sale-value" step="0.01" required class="w-full border-gray-300 border rounded-lg p-2.5 focus:ring-2 focus:ring-purple-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                                    <input type="date" id="sale-date" required class="w-full border-gray-300 border rounded-lg p-2.5 focus:ring-2 focus:ring-purple-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                    <select id="sale-status" class="w-full border-gray-300 border rounded-lg p-2.5 bg-white focus:ring-2 focus:ring-purple-500 outline-none">
+                                        <option value="Concluído">Pago (Concluído)</option>
+                                        <option value="Pendente">Aguardando Pagamento</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <button type="submit" class="px-8 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-bold shadow-lg transition transform hover:-translate-y-0.5">Salvar Registro</button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+
+                <section id="contabilidade" class="content-section">
+                    <div class="bg-white rounded-xl shadow-sm p-8 text-center max-w-4xl mx-auto">
+                        <i class="fas fa-chart-pie text-5xl text-gray-200 mb-4"></i>
+                        <h2 class="text-2xl font-bold text-gray-700 mb-8">Resumo Financeiro</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="p-6 bg-green-50 rounded-xl border border-green-100">
+                                <p class="text-green-800 font-bold text-sm uppercase">Em Caixa</p>
+                                <p class="text-3xl font-bold text-green-600 mt-2" id="fin-caixa">R$ 0,00</p>
+                            </div>
+                            <div class="p-6 bg-gray-50 rounded-xl border border-gray-100">
+                                <p class="text-gray-500 font-bold text-sm uppercase">Ticket Médio</p>
+                                <p class="text-3xl font-bold text-gray-600 mt-2" id="fin-ticket">R$ 0,00</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h3 class="text-xl font-bold text-gray-800">Adicionar Membro</h3>
+                <button onclick="closeUserModal()" class="text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <form onsubmit="registerUser(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase">Nome Completo</label>
+                        <input type="text" id="user-name" required class="w-full border border-gray-300 p-2.5 rounded-lg focus:border-indigo-500 outline-none mt-1">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase">Cargo</label>
+                        <input type="text" id="user-role" required class="w-full border border-gray-300 p-2.5 rounded-lg focus:border-indigo-500 outline-none mt-1" placeholder="Ex: Vendedor">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase">E-mail</label>
+                        <input type="email" id="user-email" required class="w-full border border-gray-300 p-2.5 rounded-lg focus:border-indigo-500 outline-none mt-1">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase">Celular / WhatsApp</label>
+                        <input type="tel" id="user-phone" required class="w-full border border-gray-300 p-2.5 rounded-lg focus:border-indigo-500 outline-none mt-1" placeholder="(00) 00000-0000">
+                    </div>
+                </div>
+                <button type="submit" class="w-full mt-6 bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 font-bold shadow">Salvar Usuário</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- DADOS INICIAIS ---
+        const defaultSales = [
+            { id: 1, client: 'Tech Solutions', product: 'Consultoria TI', value: 2500.00, date: '2026-01-02', status: 'Concluído' },
+            { id: 2, client: 'Mercado Local', product: 'Sistema PDV', value: 1200.00, date: '2026-01-03', status: 'Pendente' }
+        ];
+
+        const defaultUsers = [
+            { id: 1, name: 'Admin Master', role: 'Gerente Geral', email: 'admin@corp.com', phone: '11999999999', bg: 'bg-purple-600' },
+            { id: 2, name: 'Julia Roberts', role: 'Vendas', email: 'julia@corp.com', phone: '21988888888', bg: 'bg-pink-500' }
+        ];
+
+        let salesData = JSON.parse(localStorage.getItem('salesV3')) || defaultSales;
+        let usersData = JSON.parse(localStorage.getItem('usersV3')) || defaultUsers;
+
+        // --- LOGIN COM VERIFICAÇÃO ---
+        function handleLogin(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            const validEmail = "admin@empresa.com";
+            const validPassword = "123456";
+
+            if (email === validEmail && password === validPassword) {
+                const login = document.getElementById('login-screen');
+                login.style.opacity = '0';
+                setTimeout(() => {
+                    login.style.display = 'none';
+                    document.getElementById('app-main').style.display = 'block';
+                    initApp();
+                }, 600);
+            } else {
+                showToast('Credenciais inválidas. Tente novamente.', 'error');
+                document.getElementById('login-password').value = '';
+            }
+        }
+
+        function initApp() {
+            renderAllSales();
+            renderUsers();
+            updateDashboard();
+            initChart();
+        }
+
+        function navTo(id) {
+            document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(id).classList.add('active');
+            
+            const links = document.querySelectorAll('.nav-link');
+            for(let link of links) {
+                if(link.getAttribute('onclick').includes(id)) {
+                    link.classList.add('active');
+                    break;
+                }
+            }
+
+            const titles = {
+                'dashboard': 'Dashboard Principal',
+                'vendas': 'Visualizar Vendas',
+                'admin': 'Administração e Exclusão',
+                'usuarios': 'Gestão de Pessoas',
+                'registro': 'Novo Lançamento',
+                'contabilidade': 'Relatório Financeiro'
+            };
+            document.getElementById('page-title').innerText = titles[id] || 'Visão Geral';
+            
+            if(window.innerWidth < 1024) document.getElementById('sidebar').classList.add('-translate-x-full');
+        }
+
+        // --- FUNÇÕES DE VENDAS ---
+        function registerSale(e) {
+            e.preventDefault();
+            const newSale = {
+                id: Date.now(),
+                client: document.getElementById('sale-client').value,
+                product: document.getElementById('sale-product').value,
+                value: parseFloat(document.getElementById('sale-value').value),
+                date: document.getElementById('sale-date').value,
+                status: document.getElementById('sale-status').value
+            };
+            salesData.push(newSale);
+            saveData();
+            showToast('Venda registrada com sucesso!', 'success');
+            document.getElementById('sale-form').reset();
+            renderAllSales();
+            updateDashboard();
+        }
+
+        function deleteSale(id) {
+            if(confirm('ATENÇÃO: Confirma a exclusão deste registro?')) {
+                salesData = salesData.filter(s => s.id !== id);
+                saveData();
+                renderAllSales();
+                updateDashboard();
+                showToast('Registro excluído.', 'error');
+            }
+        }
+
+        function deleteAllSales() {
+            if(confirm('PERIGO: Isso apagará TODAS as vendas. Tem certeza absoluta?')) {
+                if(confirm('Último aviso. Isso não pode ser desfeito.')) {
+                    salesData = [];
+                    saveData();
+                    renderAllSales();
+                    updateDashboard();
+                    showToast('Banco de dados limpo.', 'error');
+                }
+            }
+        }
+
+        function renderAllSales() {
+            const viewBody = document.getElementById('sales-view-body');
+            viewBody.innerHTML = '';
+            
+            if(salesData.length === 0) {
+                document.getElementById('empty-view').classList.remove('hidden');
+            } else {
+                document.getElementById('empty-view').classList.add('hidden');
+                salesData.forEach(sale => {
+                    const statusClass = sale.status === 'Concluído' ? 'text-green-600 bg-green-100' : 'text-yellow-600 bg-yellow-100';
+                    viewBody.innerHTML += `
+                        <tr class="hover:bg-gray-50 border-b border-gray-50">
+                            <td class="p-4 font-medium text-gray-800">${sale.client}</td>
+                            <td class="p-4 text-gray-600">${sale.product}</td>
+                            <td class="p-4 text-gray-500">${new Date(sale.date).toLocaleDateString('pt-BR')}</td>
+                            <td class="p-4 font-bold">R$ ${sale.value.toFixed(2)}</td>
+                            <td class="p-4"><span class="px-2 py-1 rounded text-xs font-bold uppercase ${statusClass}">${sale.status}</span></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            const adminBody = document.getElementById('sales-admin-body');
+            adminBody.innerHTML = '';
+            salesData.forEach(sale => {
+                adminBody.innerHTML += `
+                    <tr class="hover:bg-red-50 border-b border-gray-100">
+                        <td class="p-4 text-gray-400 font-mono text-xs">#${sale.id}</td>
+                        <td class="p-4 font-bold text-gray-700">${sale.client}</td>
+                        <td class="p-4 font-bold text-gray-700">R$ ${sale.value.toFixed(2)}</td>
+                        <td class="p-4 text-center">
+                            <button onclick="deleteSale(${sale.id})" class="bg-white border border-red-200 text-red-500 hover:bg-red-600 hover:text-white px-3 py-1 rounded transition shadow-sm text-sm">
+                                <i class="fas fa-trash"></i> Excluir
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // --- FUNÇÕES DE USUÁRIOS ---
+        function openUserModal() { document.getElementById('userModal').style.display = 'block'; }
+        function closeUserModal() { document.getElementById('userModal').style.display = 'none'; }
+
+        function registerUser(e) {
+            e.preventDefault();
+            const colors = ['bg-indigo-500', 'bg-pink-500', 'bg-purple-500', 'bg-blue-500'];
+            const newUser = {
+                id: Date.now(),
+                name: document.getElementById('user-name').value,
+                role: document.getElementById('user-role').value,
+                email: document.getElementById('user-email').value,
+                phone: document.getElementById('user-phone').value,
+                bg: colors[Math.floor(Math.random() * colors.length)]
+            };
+            usersData.push(newUser);
+            saveData();
+            showToast('Membro adicionado!', 'success');
+            closeUserModal();
+            renderUsers();
+            updateDashboard();
+        }
+
+        function renderUsers() {
+            const grid = document.getElementById('users-grid');
+            grid.innerHTML = '';
+            usersData.forEach(user => {
+                const rawPhone = user.phone ? user.phone.replace(/\D/g, '') : '';
+                
+                grid.innerHTML += `
+                    <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition p-6 border border-gray-100 flex flex-col items-center text-center relative group">
+                        <div class="w-20 h-20 rounded-full ${user.bg} text-white flex items-center justify-center text-2xl font-bold mb-3 shadow-lg ring-4 ring-white">
+                            ${user.name.charAt(0)}
+                        </div>
+                        <h3 class="font-bold text-gray-800 text-lg">${user.name}</h3>
+                        <p class="text-indigo-500 text-sm font-medium mb-1">${user.role}</p>
+                        
+                        <div class="flex gap-4 mt-4 w-full justify-center">
+                            <a href="mailto:${user.email}" title="Enviar Email" class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-blue-100 hover:text-blue-600 transition">
+                                <i class="fas fa-envelope"></i>
+                            </a>
+                            
+                            <a href="tel:${user.phone}" title="Ligar" class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-green-100 hover:text-green-600 transition">
+                                <i class="fas fa-phone"></i>
+                            </a>
+
+                            <a href="https://wa.me/55${rawPhone}" target="_blank" title="WhatsApp" class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-green-500 hover:text-white transition">
+                                <i class="fab fa-whatsapp"></i>
+                            </a>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // --- DASHBOARD ---
+        function updateDashboard() {
+            const total = salesData.filter(s => s.status === 'Concluído').reduce((a, b) => a + b.value, 0);
+            const pending = salesData.filter(s => s.status === 'Pendente').reduce((a, b) => a + b.value, 0);
+            
+            document.getElementById('dash-receita').innerText = `R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('dash-pedidos').innerText = salesData.length;
+            document.getElementById('dash-users').innerText = usersData.length;
+            document.getElementById('dash-pendente').innerText = `R$ ${pending.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+
+            document.getElementById('fin-caixa').innerText = `R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('fin-ticket').innerText = salesData.length ? `R$ ${(total/salesData.length).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : 'R$ 0,00';
+        }
+
+        // --- UTILS ---
+        function saveData() {
+            localStorage.setItem('salesV3', JSON.stringify(salesData));
+            localStorage.setItem('usersV3', JSON.stringify(usersData));
+        }
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.className = `toast show ${type}`;
+            setTimeout(() => t.className = t.className.replace('show', ''), 3000);
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai'],
+                    datasets: [{
+                        label: 'Vendas',
+                        data: [1500, 2300, 3200, 1800, 4500],
+                        backgroundColor: '#8b5cf6',
+                        borderRadius: 6
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+    </script>
+</body>
+</html>
